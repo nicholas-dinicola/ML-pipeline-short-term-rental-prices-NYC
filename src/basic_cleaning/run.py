@@ -37,7 +37,7 @@ def go(args):
     # Save the cleaned dataset
     logger.info("Saving the output artifact")
     file_name = "clean_sample.csv"
-    df.to_csv(file_name)
+    df.to_csv(file_name, index=False)
 
     artifact = wandb.Artifact(
         args.output_artifact,
