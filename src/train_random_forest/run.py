@@ -13,6 +13,7 @@ import json
 
 import pandas as pd
 import numpy as np
+from mlflow.models import infer_signature
 from sklearn.compose import ColumnTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.impute import SimpleImputer
@@ -91,20 +92,31 @@ def go(args):
     if os.path.exists("random_forest_dir"):
         shutil.rmtree("random_forest_dir")
 
-    ######################################
     # Save the sk_pipe pipeline as a mlflow.sklearn model in the directory "random_forest_dir"
-    # HINT: use mlflow.sklearn.save_model
-    # YOUR CODE HERE
-    ######################################
 
-    ######################################
+    export_path = "random_forest_dir"
+    signature=infer_signature(X_train, sk_pipe(X_train))
+    mlflow.sklearn.save_model(
+        sk_pipe,
+        export_path,
+        signature=signature,
+        input_example=X_train.iloc[:5]
+    )
+
     # Upload the model we just exported to W&B
     # HINT: use wandb.Artifact to create an artifact. Use args.output_artifact as artifact name, "model_export" as
     # type, provide a description and add rf_config as metadata. Then, use the .add_dir method of the artifact instance
     # you just created to add the "random_forest_dir" directory to the artifact, and finally use
     # run.log_artifact to log the artifact to the run
-    # YOUR CODE HERE
-    ######################################
+
+    artifact = wandb.Artifact(
+        args.output_artifact,
+        type="model_export",
+        description="Trained pipeline artifact",
+        metadata=rf_config
+    )
+    artifact.add_dir(export_path)
+    run.log_artifact(artifact)
 
     # Plot feature importance
     fig_feat_imp = plot_feature_importance(sk_pipe, processed_features)
